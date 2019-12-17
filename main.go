@@ -43,19 +43,30 @@ func getMongoCollection(mongoURL, dbName, collectionName string) *mongo.Collecti
 	return collection
 }
 
-func getKafkaReader(kafkaURL, topic string, partition int) *kafka.Conn {
-	conn, err := kafka.DialLeader(context.Background(), "tcp", kafkaURL, topic, partition)
+// func getKafkaReader(kafkaURL, topic string, partition int) *kafka.Conn {
+// 	conn, err := kafka.DialLeader(context.Background(), "tcp", kafkaURL, topic, partition)
 
-	if err != nil {
-		log.Fatal("Connection Kafka Err", err)
-	}
+// 	if err != nil {
+// 		log.Fatal("Connection Kafka Err", err)
+// 	}
 
-	return conn
+// 	return conn
+// }
+
+func getKafkaReader(kafkaURL, topic, group string) *kafka.Reader {
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{kafkaURL},
+		Topic:   topic,
+		GroupID: group,
+		// Partition: 0,
+		MinBytes: 10e3, // 10KB
+		MaxBytes: 10e6, // 10MB
+	})
 }
 
 // WriteToDB :
-func WriteToDB(conn *kafka.Conn, collection *mongo.Collection) {
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+func WriteToDB(reader *kafka.Reader, collection *mongo.Collection) {
+	// conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 	// batch := conn.ReadBatch(10e3, 1e6)
 	// b := make([]byte, 10e3)
 
@@ -69,7 +80,9 @@ func WriteToDB(conn *kafka.Conn, collection *mongo.Collection) {
 	// }
 
 	// batch.Close()
-	msg, err := conn.ReadMessage(1e6)
+	// msg, err := conn.ReadMessage(1e6)
+
+	msg, err := reader.ReadMessage(context.Background())
 
 	if err != nil {
 		return
@@ -107,13 +120,15 @@ func main() {
 	// topic := os.Getenv("KAFKA_TOPIC")
 	kafkaURL := "localhost:29092"
 	topic := "user-topic"
-	partition := 0
+	// partition := 0
+	group := "group"
+	// conn, err := kafka.DialLeader(context.Background(), "tcp", kafkaURL, topic, partition)
 
-	conn, err := kafka.DialLeader(context.Background(), "tcp", kafkaURL, topic, partition)
+	// if err != nil {
+	// 	log.Panic("connection kafka err", err)
+	// }
 
-	if err != nil {
-		log.Panic("connection kafka err", err)
-	}
+	newReader := getKafkaReader(kafkaURL, topic, group)
 
 	// conn.SetReadDeadline(time.Now().Add(time.Second))
 	// batch := conn.ReadBatch(10e3, 1e6)
@@ -129,7 +144,8 @@ func main() {
 
 	// batch.Close()
 
-	defer conn.Close()
+	// defer conn.Close()
+	defer newReader.Close()
 
 	var wg sync.WaitGroup
 
@@ -138,11 +154,11 @@ func main() {
 		i++
 		wg.Add(1)
 
-		go WriteToDB(conn, userCollection)
+		go WriteToDB(newReader, userCollection)
 
 		// wg.Wait()
 
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	// wg.Wait()
