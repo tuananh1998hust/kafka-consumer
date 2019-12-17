@@ -14,36 +14,41 @@ services:
     image: bitnami/kafka:latest
     ports:
       - 9092:9092
+      - 29092:29092
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
     networks:
       - golang
 
-  kafka_consumer:
-    build: .
-    depends_on:
-      - kafka
-      - mongo_db
-    environment:
-      - KAFKA_URL=kafka:9092
-      - KAFKA_TOPIC=user-topic
-      - DBHOST=mongodb://mongo_db
-    networks:
-      - golang
-
-  kafka_producer:
-    image: kafka-producer_myapp
-    ports:
-      - 8080:8080
-    depends_on:
-      - kafka
-    environment:
-      - KAFKA_URL=kafka:9092
-      - KAFKA_TOPIC=user-topic
-    networks:
-      - golang
-
+  # kafka_consumer:
+  #   build: .
+  #   depends_on:
+  #     - kafka
+  #     - mongo_db
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     - KAFKA_URL=kafka:9092
+  #     - KAFKA_TOPIC=user-topic
+  #     - DBHOST=mongodb://mongo_db
+  #   command: sh wait-for-it.sh kafka:9092 -- /app/main
+  #   networks:
+  #     - golang
+  # kafka_producer:
+  #   image: kafka-producer_myapp
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - kafka
+  #   environment:
+  #     - KAFKA_URL=kafka:9092
+  #     - KAFKA_TOPIC=user-topic
+  #   networks:
+  #     - golang
   mongo_db:
     image: mongo:latest
     ports:
