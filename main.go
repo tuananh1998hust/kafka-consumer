@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -108,18 +109,18 @@ func WriteToDB(reader *kafka.Reader, collection *mongo.Collection) {
 
 func main() {
 	// get Mongo db Collection using environment variables.
-	// mongoURL := os.Getenv("MONGO_URL")
-	mongoURL := "mongodb://localhost:27017"
+	mongoURL := os.Getenv("MONGO_URL")
+	// mongoURL := "mongodb://localhost:27017"
 	dbName := "gokafka"
 	// dbName := os.Getenv("DB_NAME")
 	// collectionName := os.Getenv("collectionName")
 	userCollection := getMongoCollection(mongoURL, dbName, "user")
 
 	// get kafka reader using environment variables.
-	// kafkaURL := os.Getenv("KAFKA_URL")
-	// topic := os.Getenv("KAFKA_TOPIC")
-	kafkaURL := "localhost:29092"
-	topic := "user-topic"
+	kafkaURL := os.Getenv("KAFKA_URL")
+	topic := os.Getenv("KAFKA_TOPIC")
+	// kafkaURL := "localhost:29092"
+	// topic := "user-topic"
 	// partition := 0
 	group := "group"
 	// conn, err := kafka.DialLeader(context.Background(), "tcp", kafkaURL, topic, partition)
@@ -149,14 +150,10 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	i := 0
 	for {
-		i++
 		wg.Add(1)
 
 		go WriteToDB(newReader, userCollection)
-
-		// wg.Wait()
 
 		time.Sleep(100 * time.Millisecond)
 	}

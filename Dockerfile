@@ -8,7 +8,9 @@ RUN apk add git build-base && \
 FROM alpine:3.10
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/tuananh1998hust/kafka-consumer/main ./
-COPY ./wait-for-it.sh ./
+COPY ./wait-for.sh ./
+COPY ./start.sh ./
 # COPY ./docker-entrypoint.sh ./
-RUN chmod +x ./wait-for-it.sh
+RUN chmod +x ./wait-for.sh
+RUN chmod +x ./start.sh
 #RUN chmod +x ./docker-entrypoint.sh

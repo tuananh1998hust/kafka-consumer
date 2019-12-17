@@ -24,20 +24,19 @@ services:
     networks:
       - golang
 
-  # kafka_consumer:
-  #   build: .
-  #   depends_on:
-  #     - kafka
-  #     - mongo_db
-  #   volumes:
-  #     - .:/app
-  #   environment:
-  #     - KAFKA_URL=kafka:9092
-  #     - KAFKA_TOPIC=user-topic
-  #     - DBHOST=mongodb://mongo_db
-  #   command: sh wait-for-it.sh kafka:9092 -- /app/main
-  #   networks:
-  #     - golang
+  kafka_consumer:
+    build: .
+    depends_on:
+      - kafka
+      - mongo_db
+    environment:
+      - KAFKA_URL=kafka:9092
+      - KAFKA_TOPIC=user-topic
+      - MONGO_URL=mongodb://mongo_db
+    command: ./wait-for.sh kafka:9092 -- ./start.sh
+    networks:
+      - golang
+
   # kafka_producer:
   #   image: kafka-producer_myapp
   #   ports:
@@ -49,6 +48,7 @@ services:
   #     - KAFKA_TOPIC=user-topic
   #   networks:
   #     - golang
+
   mongo_db:
     image: mongo:latest
     ports:
