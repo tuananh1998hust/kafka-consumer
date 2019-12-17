@@ -1,0 +1,55 @@
+version: "3.4"
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    ports:
+      - 2181:2181
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - golang
+
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - 9092:9092
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    networks:
+      - golang
+
+  kafka_consumer:
+    build: .
+    depends_on:
+      - kafka
+      - mongo_db
+    environment:
+      - KAFKA_URL=kafka:9092
+      - KAFKA_TOPIC=user-topic
+      - DBHOST=mongodb://mongo_db
+    networks:
+      - golang
+
+  kafka_producer:
+    image: kafka-producer_myapp
+    ports:
+      - 8080:8080
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_URL=kafka:9092
+      - KAFKA_TOPIC=user-topic
+    networks:
+      - golang
+
+  mongo_db:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    networks:
+      - golang
+
+networks:
+  golang:
