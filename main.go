@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	kafka "github.com/segmentio/kafka-go"
@@ -148,14 +147,14 @@ func main() {
 	// defer conn.Close()
 	defer newReader.Close()
 
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
 	for {
-		wg.Add(1)
+		// wg.Add(1)
 
-		go WriteToDB(newReader, userCollection)
+		WriteToDB(newReader, userCollection)
 
-		time.Sleep(100 * time.Millisecond)
+		// time.Sleep(100 * time.Millisecond)
 	}
 
 	// wg.Wait()
